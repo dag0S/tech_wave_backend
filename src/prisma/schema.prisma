@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  role     String  @default("USER")
+  basket   Basket?
+  ratings  Rating[]
+}
+
+model Basket {
+  id             Int              @id @default(autoincrement())
+  user           User             @relation(fields: [userId], references: [id])
+  userId         Int              @unique
+  basketDevice   BasketDevice[]
+}
+
+model BasketDevice {
+  id         Int       @id @default(autoincrement())
+  basket     Basket    @relation(fields: [basketId], references: [id])
+  basketId   Int  
+  device     Device  @relation(fields: [deviceId], references: [id])
+  deviceId   Int  
+}
+
+model Device {
+  id             Int      @id @default(autoincrement())
+  name           String   @unique
+  price          Int
+  rating         Int      @default(0)
+  img            String
+  type           Type         @relation(fields: [typeId], references: [id])
+  typeId         Int 
+  brand          Brand         @relation(fields: [brandId], references: [id])
+  brandId        Int 
+  ratings        Rating[]
+  BasketDevice   BasketDevice[]
+  deviceInfo     DeviceInfo[]
+}
+
+model Type {
+  id       Int            @id @default(autoincrement())
+  name     String         @unique
+  devices  Device[] 
+  brands   BrandType[]
+}
+
+model Brand {
+  id       Int         @id @default(autoincrement())
+  name     String      @unique
+  devices  Device[]
+  types    BrandType[]
+}
+
+model BrandType {
+  id         Int     @id @default(autoincrement())
+  brand      Brand   @relation(fields: [brandId], references: [id])
+  brandId    Int
+  type       Type    @relation(fields: [typeId], references: [id])
+  typeId     Int
+}
+
+model Rating {
+  id       Int     @id @default(autoincrement())
+  rate     Int
+  user     User    @relation(fields: [userId], references: [id])
+  userId   Int   
+  device   Device  @relation(fields: [deviceId], references: [id])
+  deviceId Int    
+}
+
+model DeviceInfo {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  device      Device  @relation(fields: [deviceId], references: [id])
+  deviceId    Int  
+}
