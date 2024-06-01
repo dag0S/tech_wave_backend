@@ -1,4 +1,8 @@
 import { Request, Response } from "express";
+import bcrypt from "bcrypt";
+import prisma from "../prisma/prisma-client.js";
+import { generateJWT } from "../utils/generateJWT.js";
+import { CustomRequest } from "../middlewares/auth.js";
 
 /**
  * @route POST /api/user/login
@@ -6,7 +10,38 @@ import { Request, Response } from "express";
  * @access Public
  */
 const login = async (req: Request, res: Response) => {
-  res.send("login");
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Пожалуйста, заполните обязательные поля" });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    const secret = process.env.JWT_SECRET;
+    const isPasswordCorrect =
+      user && (await bcrypt.compare(password, user.password));
+
+    if (user && isPasswordCorrect && secret) {
+      const token = generateJWT(user.id, user.email, user.role);
+      res.status(200).json({ token });
+    } else {
+      return res.status(400).json({
+        message: "Неверно введен логин или пароль",
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({
+      message: "Неверно введен логин или пароль",
+    });
+  }
 };
 
 /**
@@ -15,7 +50,58 @@ const login = async (req: Request, res: Response) => {
  * @access Public
  */
 const register = async (req: Request, res: Response) => {
-  res.send("register");
+  try {
+    const { email, password, role } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Пожалуйста, заполните обязательные поля",
+      });
+    }
+
+    const registeredUser = await prisma.user.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (registeredUser) {
+      return res.status(400).json({
+        message: "Пользователь, с таким email уже существует",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(password, salt);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashPassword,
+        role,
+      },
+    });
+
+    const basket = await prisma.basket.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    const token = generateJWT(user.id, user.email, user.role);
+
+    if (user) {
+      res.status(201).json({ token });
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Не удалось создать пользователя" });
+    }
+  } catch (error) {
+    res.status(400).json({
+      message: "Что-то пошло не так",
+    });
+  }
 };
 
 /**
@@ -23,8 +109,15 @@ const register = async (req: Request, res: Response) => {
  * @desc Текущий пользователь
  * @access Private
  */
-const current = async (req: Request, res: Response) => {
-  res.send("current");
+const current = async (req: CustomRequest, res: Response) => {
+  if (req.user) {
+    const token = generateJWT(req.user.id, req.user.email, req.user.role);
+    res.status(200).json({ token });
+  } else {
+    res.status(400).json({
+      message: "Что-то пошло не так",
+    });
+  }
 };
 
 export { login, register, current };

@@ -9,7 +9,7 @@ import router from "./routes/index.js";
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3333;
 
 const __dirname = import.meta.dirname;
 
