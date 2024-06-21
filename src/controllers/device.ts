@@ -32,7 +32,7 @@ const create = async (req: RequestBody<DeviceRequestBody>, res: Response) => {
         message: "Все поля обязательные",
       });
     }
-
+    
     const device = await prisma.device.create({
       data: {
         name: data.name,

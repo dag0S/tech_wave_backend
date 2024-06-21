@@ -30,9 +30,10 @@ model Basket {
 }
 
 model FavoritesList {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+  id              Int              @id @default(autoincrement())
+  user            User             @relation(fields: [userId], references: [id])
+  userId          Int              @unique
+  favoriteDevices favoriteDevice[]
 }
 
 model Device {
@@ -61,6 +62,12 @@ model BasketDevice {
   id       Int    @id @default(autoincrement())
   basket   Basket @relation(fields: [basketId], references: [id])
   basketId Int
+}
+
+model favoriteDevice {
+  id              Int           @id @default(autoincrement())
+  favoritesList   FavoritesList @relation(fields: [favoritesListId], references: [id])
+  favoritesListId Int
 }
 
 model Category {
