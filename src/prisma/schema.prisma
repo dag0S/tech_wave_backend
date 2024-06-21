@@ -13,9 +13,10 @@ datasource db {
 model User {
   id            Int            @id @default(autoincrement())
   name          String
+  password      String
   email         String         @unique
   role          String         @default("USER")
-  avatar        String
+  avatar        String?
   basket        Basket?
   favoritesList FavoritesList?
   ratings       Raitng[]
@@ -64,12 +65,14 @@ model BasketDevice {
 
 model Category {
   id         Int             @id @default(autoincrement())
+  name       String          @unique
   devices    Device[]
   categories CategoryBrand[]
 }
 
 model Brand {
   id      Int             @id @default(autoincrement())
+  name    String          @unique
   devices Device[]
   brands  CategoryBrand[]
 }

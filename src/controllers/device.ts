@@ -1,25 +1,33 @@
-import { Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
+import { Response } from "express";
 import prisma from "../prisma/prisma-client.js";
-import { off } from "process";
+import {
+  DeviceRequestBody,
+  DeviceRequestParams,
+  DeviceRequestQuery,
+  IImage,
+  IInfo,
+  RequestBody,
+  RequestParams,
+  RequestQuery,
+} from "./types/types.js";
+import { Device } from "@prisma/client";
 
 /**
  * @route POST /api/device/create
  * @desc Добавление товара
  * @access Private
  */
-const create = async (req: Request, res: Response) => {
+const create = async (req: RequestBody<DeviceRequestBody>, res: Response) => {
   try {
     const data = req.body;
-    const { img }: any = req.files;
 
-    let fileName = uuidv4() + ".jpg";
-    const __dirname = import.meta.dirname;
-
-    img.mv(path.resolve(__dirname, "..", "static", fileName));
-
-    if (!data.name || !data.price || !data.brandId || !data.typeId) {
+    if (
+      !data.name ||
+      !data.price ||
+      !data.brandId ||
+      !data.categoryId ||
+      !data.description
+    ) {
       return res.status(400).json({
         message: "Все поля обязательные",
       });
@@ -28,25 +36,34 @@ const create = async (req: Request, res: Response) => {
     const device = await prisma.device.create({
       data: {
         name: data.name,
-        price: parseInt(data.price),
-        brandId: parseInt(data.brandId),
-        typeId: parseInt(data.typeId),
-        img: fileName,
+        description: data.description,
+        price: data.price,
+        brandId: data.brandId,
+        categoryId: data.categoryId,
       },
     });
 
-    interface IInfo {
-      title: string;
-      description: string;
-    }
-
     if (data.info) {
       const info = JSON.parse(data.info);
+
       info.forEach((i: IInfo) =>
         prisma.deviceInfo.create({
           data: {
             title: i.title,
             description: i.description,
+            deviceId: device.id,
+          },
+        })
+      );
+    }
+
+    if (data.images) {
+      const images = JSON.parse(data.images);
+
+      images.forEach((i: IImage) =>
+        prisma.deviceImage.create({
+          data: {
+            image: i.image,
             deviceId: device.id,
           },
         })
@@ -66,16 +83,21 @@ const create = async (req: Request, res: Response) => {
  * @desc Получение всех товаров + фильтрация
  * @access Public
  */
-const getAll = async (req: Request, res: Response) => {
+const getAll = async (req: RequestQuery<DeviceRequestQuery>, res: Response) => {
   try {
-    let { brandId, typeId, limit, page }: any = req.query;
-    page = +page || 1;
-    limit = +limit || 9;
+    let { brandId, categoryId, limit, page } = req.query;
+
+    if (page) page = +page;
+    else page = 1;
+
+    if (limit) limit = +limit;
+    else limit = 9;
+
     let offset = page * limit - limit;
-    let devices;
+    let devices: Device[] = [];
 
     // /api/device/
-    if (!brandId && !typeId) {
+    if (!brandId && !categoryId) {
       devices = await prisma.device.findMany({
         take: limit,
         skip: offset,
@@ -83,10 +105,10 @@ const getAll = async (req: Request, res: Response) => {
     }
 
     // /api/device/?brandId=1
-    if (brandId && !typeId && typeof brandId === "string") {
+    if (brandId && !categoryId) {
       devices = await prisma.device.findMany({
         where: {
-          brandId: parseInt(brandId),
+          brandId: +brandId,
         },
         skip: offset,
         take: limit,
@@ -94,10 +116,10 @@ const getAll = async (req: Request, res: Response) => {
     }
 
     // /api/device/?typeId=1
-    if (!brandId && typeId && typeof typeId === "string") {
+    if (!brandId && categoryId) {
       devices = await prisma.device.findMany({
         where: {
-          typeId: parseInt(typeId),
+          categoryId: +categoryId,
         },
         skip: offset,
         take: limit,
@@ -105,16 +127,11 @@ const getAll = async (req: Request, res: Response) => {
     }
 
     // /api/device/?brandId=1&typeId=1
-    if (
-      brandId &&
-      typeId &&
-      typeof typeId === "string" &&
-      typeof brandId === "string"
-    ) {
+    if (brandId && categoryId) {
       devices = await prisma.device.findMany({
         where: {
-          brandId: parseInt(brandId),
-          typeId: parseInt(typeId),
+          brandId: +brandId,
+          categoryId: +categoryId,
         },
         skip: offset,
         take: limit,
@@ -134,7 +151,10 @@ const getAll = async (req: Request, res: Response) => {
  * @desc Получение одного товара
  * @access Public
  */
-const getOne = async (req: Request, res: Response) => {
+const getOne = async (
+  req: RequestParams<DeviceRequestParams>,
+  res: Response
+) => {
   try {
     const { id } = req.params;
 
@@ -144,6 +164,7 @@ const getOne = async (req: Request, res: Response) => {
       },
       include: {
         deviceInfo: true,
+        deviceImages: true,
       },
     });
 

@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import prisma from "../prisma/prisma-client.js";
+import { BrandRequestBody, RequestBody } from "./types/types.js";
 
 /**
  * @route POST /api/brand/create
  * @desc Создание бренда
  * @access Private
  */
-const create = async (req: Request, res: Response) => {
+const create = async (req: RequestBody<BrandRequestBody>, res: Response) => {
   try {
     const { name } = req.body;
 
@@ -46,7 +47,5 @@ const getAll = async (req: Request, res: Response) => {
     });
   }
 };
-
-
 
 export { create, getAll };

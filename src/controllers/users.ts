@@ -3,13 +3,14 @@ import bcrypt from "bcrypt";
 import prisma from "../prisma/prisma-client.js";
 import { generateJWT } from "../utils/generateJWT.js";
 import { CustomRequest } from "../middlewares/auth.js";
+import { LoginRequestBody, RegisterRequestBody, RequestBody } from "./types/types.js";
 
 /**
  * @route POST /api/user/login
  * @desc Логин
  * @access Public
  */
-const login = async (req: Request, res: Response) => {
+const login = async (req: RequestBody<LoginRequestBody>, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -31,6 +32,7 @@ const login = async (req: Request, res: Response) => {
 
     if (user && isPasswordCorrect && secret) {
       const token = generateJWT(user.id, user.email, user.role);
+
       res.status(200).json({ token });
     } else {
       return res.status(400).json({
@@ -49,9 +51,12 @@ const login = async (req: Request, res: Response) => {
  * @desc Регистрация
  * @access Public
  */
-const register = async (req: Request, res: Response) => {
+const register = async (
+  req: RequestBody<RegisterRequestBody>,
+  res: Response
+) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, name } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -79,10 +84,17 @@ const register = async (req: Request, res: Response) => {
         email,
         password: hashPassword,
         role,
+        name,
       },
     });
 
     const basket = await prisma.basket.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    const favoritesList = await prisma.favoritesList.create({
       data: {
         userId: user.id,
       },
