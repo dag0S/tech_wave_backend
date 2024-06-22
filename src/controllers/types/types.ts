@@ -46,11 +46,15 @@ export interface IImage {
 
 export type RequestQuery<T> = Request<{}, {}, {}, T>;
 
-type NumOrStr = string | number | undefined;
+type NumOrStr = string | number;
 
 export interface DeviceRequestQuery {
   brandId?: NumOrStr;
   categoryId?: NumOrStr;
+  sortBy?: string;
+  priceFrom?: NumOrStr;
+  priceTo?: NumOrStr;
+  searchBy?: string;
   limit?: NumOrStr;
   page?: NumOrStr;
 }

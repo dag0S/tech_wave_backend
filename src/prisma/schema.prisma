@@ -41,6 +41,7 @@ model Device {
   name         String        @unique
   description  String
   price        Int
+  viewsCount   Int           @default(0)
   ratings      Raitng[]
   category     Category      @relation(fields: [categoryId], references: [id])
   categoryId   Int

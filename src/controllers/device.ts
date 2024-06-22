@@ -10,7 +10,8 @@ import {
   RequestParams,
   RequestQuery,
 } from "./types/types.js";
-import { Device } from "@prisma/client";
+import { Device, Prisma } from "@prisma/client";
+import { count } from "console";
 
 /**
  * @route POST /api/device/create
@@ -32,7 +33,7 @@ const create = async (req: RequestBody<DeviceRequestBody>, res: Response) => {
         message: "Все поля обязательные",
       });
     }
-    
+
     const device = await prisma.device.create({
       data: {
         name: data.name,
@@ -80,12 +81,21 @@ const create = async (req: RequestBody<DeviceRequestBody>, res: Response) => {
 
 /**
  * @route GET /api/device/
- * @desc Получение всех товаров + фильтрация
+ * @desc Получение всех товаров + фильтрация + сортировка + поиск
  * @access Public
  */
 const getAll = async (req: RequestQuery<DeviceRequestQuery>, res: Response) => {
   try {
-    let { brandId, categoryId, limit, page } = req.query;
+    let {
+      brandId,
+      categoryId,
+      limit,
+      page,
+      searchBy,
+      priceFrom,
+      priceTo,
+      sortBy,
+    } = req.query;
 
     if (page) page = +page;
     else page = 1;
@@ -94,51 +104,65 @@ const getAll = async (req: RequestQuery<DeviceRequestQuery>, res: Response) => {
     else limit = 9;
 
     let offset = page * limit - limit;
-    let devices: Device[] = [];
 
-    // /api/device/
-    if (!brandId && !categoryId) {
-      devices = await prisma.device.findMany({
-        take: limit,
-        skip: offset,
-      });
+    const devicesWhere: any = {};
+    const devicesOrderBy: any = {};
+
+    // сортировка
+    if (sortBy) {
+      if (sortBy[0] === "-") {
+        devicesOrderBy[sortBy.slice(1)] = "desc";
+      } else {
+        devicesOrderBy[sortBy] = "asc";
+      }
     }
 
-    // /api/device/?brandId=1
-    if (brandId && !categoryId) {
-      devices = await prisma.device.findMany({
-        where: {
-          brandId: +brandId,
+    // фильтрация
+    if (categoryId) {
+      devicesWhere["categoryId"] = +categoryId;
+    }
+    if (brandId) {
+      devicesWhere["brandId"] = +brandId;
+    }
+    if (priceFrom && priceTo) {
+      devicesWhere["price"] = { gte: +priceFrom, lte: +priceTo };
+    }
+    if (priceFrom && !priceTo) {
+      devicesWhere["price"] = { gte: +priceFrom };
+    }
+    if (!priceFrom && priceTo) {
+      devicesWhere["price"] = { lte: +priceTo };
+    }
+
+    // поиск
+    if (searchBy) {
+      devicesWhere["OR"] = [
+        {
+          name: {
+            contains: searchBy,
+          },
+          description: {
+            contains: searchBy,
+          },
         },
-        skip: offset,
-        take: limit,
-      });
+      ];
     }
 
-    // /api/device/?typeId=1
-    if (!brandId && categoryId) {
-      devices = await prisma.device.findMany({
-        where: {
-          categoryId: +categoryId,
-        },
-        skip: offset,
-        take: limit,
-      });
-    }
+    const devices = await prisma.device.findMany({
+      where: devicesWhere,
+      orderBy: devicesOrderBy,
+      skip: offset,
+      take: limit,
+    });
 
-    // /api/device/?brandId=1&typeId=1
-    if (brandId && categoryId) {
-      devices = await prisma.device.findMany({
-        where: {
-          brandId: +brandId,
-          categoryId: +categoryId,
-        },
-        skip: offset,
-        take: limit,
-      });
-    }
+    const devicesCount = await prisma.device.count({
+      where: devicesWhere,
+      orderBy: devicesOrderBy,
+      skip: offset,
+      take: limit,
+    });
 
-    res.status(200).json(devices);
+    res.status(200).json({ devicesCount, devices });
   } catch (error) {
     res.status(500).json({
       message: "Не удалось получить товары",
@@ -168,7 +192,23 @@ const getOne = async (
       },
     });
 
-    res.status(200).json(device);
+    if (device) {
+      const updatedDevice = await prisma.device.update({
+        where: {
+          id: +id,
+        },
+        data: {
+          viewsCount: {
+            increment: 1,
+          },
+        },
+      });
+      res.status(200).json(updatedDevice);
+    } else {
+      return res.status(404).json({
+        message: "Не удалось найти товар",
+      });
+    }
   } catch (error) {
     return res.status(500).json({
       message: "Не удалось получить товар",
