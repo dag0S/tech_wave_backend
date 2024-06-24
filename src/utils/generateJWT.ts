@@ -1,8 +1,19 @@
-import jwt, { Secret } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-export const generateJWT = (id: number, email: string, role: string) => {
-  const secret  = process.env.JWT_SECRET ;
-  return jwt.sign({ id, email, role }, secret as string, {
-    expiresIn: "24h",
-  });
+export const generateJWT = (
+  id: number,
+  email: string,
+  name: string,
+  role: string,
+  basket: number,
+  favoritesList: number
+) => {
+  const secret = process.env.JWT_SECRET;
+  return jwt.sign(
+    { id, email, name, role, basket, favoritesList },
+    secret as string,
+    {
+      expiresIn: "24h",
+    }
+  );
 };

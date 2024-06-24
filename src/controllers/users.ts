@@ -3,7 +3,11 @@ import bcrypt from "bcrypt";
 import prisma from "../prisma/prisma-client.js";
 import { generateJWT } from "../utils/generateJWT.js";
 import { CustomRequest } from "../middlewares/auth.js";
-import { LoginRequestBody, RegisterRequestBody, RequestBody } from "./types/types.js";
+import {
+  LoginRequestBody,
+  RegisterRequestBody,
+  RequestBody,
+} from "./types/types.js";
 
 /**
  * @route POST /api/user/login
@@ -31,9 +35,33 @@ const login = async (req: RequestBody<LoginRequestBody>, res: Response) => {
       user && (await bcrypt.compare(password, user.password));
 
     if (user && isPasswordCorrect && secret) {
-      const token = generateJWT(user.id, user.email, user.role);
+      const basket = await prisma.basket.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
 
-      res.status(200).json({ token });
+      const favoritesList = await prisma.favoritesList.findFirst({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (basket && favoritesList) {
+        const token = generateJWT(
+          user.id,
+          user.email,
+          user.name,
+          user.role,
+          basket.id,
+          favoritesList.id
+        );
+        res.status(200).json({ token });
+      } else {
+        return res.status(400).json({
+          message: "Неверно введен логин или пароль",
+        });
+      }
     } else {
       return res.status(400).json({
         message: "Неверно введен логин или пароль",
@@ -100,7 +128,14 @@ const register = async (
       },
     });
 
-    const token = generateJWT(user.id, user.email, user.role);
+    const token = generateJWT(
+      user.id,
+      user.email,
+      user.name,
+      user.role,
+      basket.id,
+      favoritesList.id
+    );
 
     if (user) {
       res.status(201).json({ token });
@@ -123,7 +158,14 @@ const register = async (
  */
 const current = async (req: CustomRequest, res: Response) => {
   if (req.user) {
-    const token = generateJWT(req.user.id, req.user.email, req.user.role);
+    const token = generateJWT(
+      req.user.id,
+      req.user.email,
+      req.user.role,
+      req.user.name,
+      req.user.basket,
+      req.user.favoritesList
+    );
     res.status(200).json({ token });
   } else {
     res.status(400).json({

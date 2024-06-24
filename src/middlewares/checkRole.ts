@@ -1,7 +1,7 @@
 import { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export interface CustomRequest extends Request {
+export interface CustomRequest extends Request<any> {
   user?: jwt.JwtPayload;
 }
 

@@ -1,6 +1,9 @@
 import { Request } from "express";
+import jwt from "jsonwebtoken";
 
 export type RequestBody<T> = Request<{}, {}, T>;
+export type RequestQuery<T> = Request<{}, {}, {}, T>;
+export type RequestParams<T> = Request<T>;
 
 // users
 export interface LoginRequestBody {
@@ -44,8 +47,6 @@ export interface IImage {
   image: string;
 }
 
-export type RequestQuery<T> = Request<{}, {}, {}, T>;
-
 type NumOrStr = string | number;
 
 export interface DeviceRequestQuery {
@@ -59,8 +60,24 @@ export interface DeviceRequestQuery {
   page?: NumOrStr;
 }
 
-export type RequestParams<T> = Request<T>;
-
 export interface DeviceRequestParams {
   id: string;
 }
+
+// favorites
+export interface FavoriteRequestBody {
+  id: number;
+}
+
+export interface FavoriteRequestParams {
+  id: string;
+}
+
+export interface FavoriteRequestBodyWithUser extends RequestBody<FavoriteRequestBody> {
+  user?: jwt.JwtPayload;
+}
+
+export interface FavoriteRequestParamsWithUser extends RequestParams<FavoriteRequestParams> {
+  user?: jwt.JwtPayload;
+}
+

@@ -10,8 +10,6 @@ import {
   RequestParams,
   RequestQuery,
 } from "./types/types.js";
-import { Device, Prisma } from "@prisma/client";
-import { count } from "console";
 
 /**
  * @route POST /api/device/create
