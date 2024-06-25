@@ -19,7 +19,7 @@ model User {
   avatar        String?
   basket        Basket?
   favoritesList FavoritesList?
-  ratings       Raitng[]
+  ratings       Rating[]
 }
 
 model Basket {
@@ -37,15 +37,15 @@ model FavoritesList {
 }
 
 model Device {
-  id             Int             @id @default(autoincrement())
-  name           String          @unique
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
   description    String
   price          Int
-  viewsCount     Int             @default(0)
-  ratings        Raitng[]
-  category       Category        @relation(fields: [categoryId], references: [id])
+  viewsCount     Int              @default(0)
+  ratings        Rating[]
+  category       Category         @relation(fields: [categoryId], references: [id])
   categoryId     Int
-  brand          Brand           @relation(fields: [brandId], references: [id])
+  brand          Brand            @relation(fields: [brandId], references: [id])
   brandId        Int
   deviceInfo     DeviceInfo[]
   deviceImages   DeviceImage[]
@@ -53,8 +53,9 @@ model Device {
   basketDevice   BasketDevice[]
 }
 
-model Raitng {
+model Rating {
   id       Int    @id @default(autoincrement())
+  rate     Int
   user     User   @relation(fields: [userId], references: [id])
   userId   Int
   device   Device @relation(fields: [deviceId], references: [id])
@@ -66,7 +67,7 @@ model BasketDevice {
   basket   Basket @relation(fields: [basketId], references: [id])
   basketId Int
   device   Device @relation(fields: [deviceId], references: [id])
-  deviceId Int    
+  deviceId Int
 }
 
 model FavoriteDevice {
@@ -74,7 +75,7 @@ model FavoriteDevice {
   favoritesList   FavoritesList @relation(fields: [favoritesListId], references: [id])
   favoritesListId Int
   device          Device        @relation(fields: [deviceId], references: [id])
-  deviceId        Int           
+  deviceId        Int
 }
 
 model Category {

@@ -73,11 +73,23 @@ export interface FavoriteRequestParams {
   id: string;
 }
 
-export interface FavoriteRequestBodyWithUser extends RequestBody<FavoriteRequestBody> {
+export interface FavoriteRequestBodyWithUser
+  extends RequestBody<FavoriteRequestBody> {
   user?: jwt.JwtPayload;
 }
 
-export interface FavoriteRequestParamsWithUser extends RequestParams<FavoriteRequestParams> {
+export interface FavoriteRequestParamsWithUser
+  extends RequestParams<FavoriteRequestParams> {
   user?: jwt.JwtPayload;
 }
 
+// rating
+export interface RatingRequestBody {
+  rate: number;
+  deviceId: number;
+}
+
+export interface RatingRequestBodyWithUser
+  extends RequestBody<RatingRequestBody> {
+  user?: jwt.JwtPayload;
+}
