@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "npx nodemon",
     "build": "rimraf ./build && npx tsc",
-    "start": "npm run build && node build/index.js"
+    "start": "npm run build && node build/index.js",
+    "migrate": "npx prisma migrate dev --name init --schema=\"./src/prisma/schema.prisma\"",
+    "deploy": "npm run migrate && npm run dev"
   },
   "keywords": [],
   "author": "",
