@@ -36,14 +36,24 @@ const add = async (req: FavoriteRequestBodyWithUser, res: Response) => {
   try {
     const id = req.body.id;
 
-    const favoriteDevice = await prisma.favoriteDevice.create({
-      data: {
+    const favoriteDevice = await prisma.favoriteDevice.findMany({
+      where: {
         deviceId: id,
         favoritesListId: req.user?.id,
       },
     });
 
-    res.status(200).json(favoriteDevice);
+    if (!(favoriteDevice.length === 0)) {
+      res.status(200).json({ message: "Товар уже в избранном" });
+    } else {
+      const newFavoriteDevice = await prisma.favoriteDevice.create({
+        data: {
+          deviceId: id,
+          favoritesListId: req.user?.id,
+        },
+      });
+      res.status(200).json(newFavoriteDevice);
+    }
   } catch (error) {
     res.status(500).json({
       message: "Не удалось добавить в избранное",
@@ -56,10 +66,7 @@ const add = async (req: FavoriteRequestBodyWithUser, res: Response) => {
  * @desc Удаление товара из избранное
  * @access Private
  */
-const remove = async (
-  req: FavoriteRequestParamsWithUser,
-  res: Response
-) => {
+const remove = async (req: FavoriteRequestParamsWithUser, res: Response) => {
   try {
     const { id } = req.params;
 

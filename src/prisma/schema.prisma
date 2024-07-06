@@ -64,6 +64,7 @@ model Rating {
 
 model BasketDevice {
   id       Int    @id @default(autoincrement())
+  count    Int    @default(1)
   basket   Basket @relation(fields: [basketId], references: [id])
   basketId Int
   device   Device @relation(fields: [deviceId], references: [id])

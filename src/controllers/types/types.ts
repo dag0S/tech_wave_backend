@@ -93,3 +93,32 @@ export interface RatingRequestBodyWithUser
   extends RequestBody<RatingRequestBody> {
   user?: jwt.JwtPayload;
 }
+
+// basket
+export interface BasketRequestBody {
+  id: number;
+}
+
+export interface BasketWithCountRequestBody {
+  id: number;
+  count: number;
+}
+
+export interface BasketRequestBodyWithUser
+  extends RequestBody<BasketRequestBody> {
+  user?: jwt.JwtPayload;
+}
+
+export interface BasketRequestParams {
+  id: string;
+}
+
+export interface basketRequestParamsWithUser
+  extends RequestParams<BasketRequestParams> {
+  user?: jwt.JwtPayload;
+}
+
+export interface BasketWhitCountRequestBodyWithUser
+  extends RequestBody<BasketWithCountRequestBody> {
+  user?: jwt.JwtPayload;
+}
